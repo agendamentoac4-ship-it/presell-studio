@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Presell Studio - Gerador de Presells para Anúncios</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <!-- JSZip library for 1-click ZIP generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+
+  <!-- Main App Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">Presell Studio <span class="badge-v2">v2.0</span></h1>
+        <p class="brand-subtitle">Gerador de Presell Robusta para Google Ads & Meta Ads (Hostinger Ready)</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btn-export-zip" class="btn btn-emerald">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Baixar Pacote (.zip)
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace Layout -->
+  <div class="app-workspace">
+
+    <!-- Control Panel Sidebar -->
+    <aside class="control-panel">
+
+      <!-- Navigation Tabs -->
+      <nav class="tabs-header" role="tablist">
+        <button class="tab-btn active" data-tab="tab-platform" role="tab">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Plataforma
+        </button>
+        <button class="tab-btn" data-tab="tab-design" role="tab">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+          Design
+        </button>
+        <button class="tab-btn" data-tab="tab-copy" role="tab">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Copy
+        </button>
+        <button class="tab-btn" data-tab="tab-pixels" role="tab">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Pixels
+        </button>
+        <button class="tab-btn" data-tab="tab-code" role="tab">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Código
+        </button>
+      </nav>
+
+      <div class="tabs-body">
+
+        <!-- Tab 1: Plataforma & Link -->
+        <section id="tab-platform" class="tab-content active">
+          <div class="form-group">
+            <label for="input-platform">Plataforma do Produto</label>
+            <select id="input-platform" class="form-control">
+              <option value="clickbank" selected>ClickBank (gclid + tid S2S)</option>
+              <option value="buygoods">BuyGoods (gclid + subid + subid2..5)</option>
+              <option value="braip">Braip (gclid + src + utm_source)</option>
+              <option value="hotmart">Hotmart (gclid + src + utm_*)</option>
+              <option value="perfectpay">PerfectPay (gclid + src)</option>
+              <option value="custom">Outra / Universal (Preserva todos parâmetros)</option>
+            </select>
+            <span class="form-hint">Define as regras de propagação de parâmetros de rastreamento no link de saída.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="input-afflink">Link de Afiliado (HopLink / Checkout)</label>
+            <input type="url" id="input-afflink" class="form-control" value="https://62379g035eoa2xdeo7nx0qlsf9.hop.clickbank.net" placeholder="https://seuapelido.vendor.hop.clickbank.net" />
+            <span class="form-hint">O link para onde o lead será direcionado ao clicar nos botões ou fechar o modal.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="input-product-name">Nome da Oferta / Produto</label>
+            <input type="text" id="input-product-name" class="form-control" value="Femicore Supplement" placeholder="Ex: Femicore, Alpilean, Sugar Defender" />
+          </div>
+        </section>
+
+        <!-- Tab 2: Design & Fundo -->
+        <section id="tab-design" class="tab-content">
+          <div class="form-group">
+            <label for="input-bg-url">URL da Imagem do Produtor (Print da VSL/Página)</label>
+            <input type="url" id="input-bg-url" class="form-control" value="https://s3.eu-central-2.wasabisys.com/w.storage.screenshotapi.net/getfemicore_com_text_nhl2_php_hopid_1cb1f747_e730__4e1054324d85.webp" placeholder="https://sua-hospedagem.com/print-vsl.webp" />
+            <span class="form-hint">Imagem do fundo que simula a página do produtor atrás do modal de cookies.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="input-blur">Intensidade do Desfoque (Blur)</label>
+            <div class="range-wrapper">
+              <input type="range" id="input-blur" min="0" max="20" value="8" step="1" />
+              <span id="val-blur" class="range-val">8px</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="input-overlay-opacity">Escurecimento da Máscara (Dark Overlay)</label>
+            <div class="range-wrapper">
+              <input type="range" id="input-overlay-opacity" min="0" max="90" value="45" step="5" />
+              <span id="val-overlay" class="range-val">45%</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 3: Copy do Modal -->
+        <section id="tab-copy" class="tab-content">
+          <div class="form-group">
+            <label for="input-modal-title">Título do Modal</label>
+            <input type="text" id="input-modal-title" class="form-control" value="Configurações de cookies" />
+          </div>
+
+          <div class="form-group">
+            <label for="input-modal-text">Texto de Consentimento / Política</label>
+            <textarea id="input-modal-text" class="form-control" rows="4">Usamos cookies e tecnologias semelhantes para ajudar a personalizar o conteúdo, adaptar e medir anúncios e fornecer uma melhor experiência de navegação. Ao clicar em aceitar, você concorda com este uso, conforme descrito em nossa Política de Privacidade.</textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col">
+              <label for="input-btn-accept">Texto Botão Aceitar</label>
+              <input type="text" id="input-btn-accept" class="form-control" value="Sim, eu aceito" />
+            </div>
+            <div class="form-group col">
+              <label for="input-btn-decline">Texto Botão Recusar</label>
+              <input type="text" id="input-btn-decline" class="form-control" value="Eu não aceito" />
+            </div>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <input type="checkbox" id="input-show-close" checked />
+            <label for="input-show-close">Exibir botão "X" de fechar no canto superior</label>
+          </div>
+        </section>
+
+        <!-- Tab 4: Pixels & Rastreamento -->
+        <section id="tab-pixels" class="tab-content">
+          
+          <div class="form-group">
+            <label for="input-pixel-gtag">Google Ads Conversion Tag (GTag)</label>
+            <input type="text" id="input-pixel-gtag" class="form-control" placeholder="AW-123456789" />
+            <span class="form-hint">Exemplo: AW-109283746</span>
+          </div>
+
+          <div class="form-group">
+            <label for="input-pixel-gtag-label">Label de Conversão no Clique (Google Ads)</label>
+            <input type="text" id="input-pixel-gtag-label" class="form-control" placeholder="AW-123456789/aBcDeFgHiJkL" />
+            <span class="form-hint">Dispara o evento de conversão no Google Ads no momento do clique do lead.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="input-pixel-gtm">Google Tag Manager (GTM Container ID)</label>
+            <input type="text" id="input-pixel-gtm" class="form-control" placeholder="GTM-XXXXXXX" />
+          </div>
+
+          <div class="form-group">
+            <label for="input-pixel-ga4">Google Analytics 4 (GA4 Measurement ID)</label>
+            <input type="text" id="input-pixel-ga4" class="form-control" placeholder="G-XXXXXXXXXX" />
+          </div>
+
+          <div class="form-group">
+            <label for="input-pixel-fb">Facebook / Meta Pixel ID</label>
+            <input type="text" id="input-pixel-fb" class="form-control" placeholder="123456789012345" />
+            <span class="form-hint">Dispara automaticamente o evento 'Lead' ao clicar no botão.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="input-pixel-tiktok">TikTok Pixel ID</label>
+            <input type="text" id="input-pixel-tiktok" class="form-control" placeholder="CXXXXXXXXXXXXXXX" />
+          </div>
+
+          <div class="form-group">
+            <label for="input-custom-head">Scripts Personalizados para o &lt;head&gt;</label>
+            <textarea id="input-custom-head" class="form-control code-input" rows="3" placeholder="<!-- Seus scripts de head aqui -->"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="input-custom-body">Scripts Personalizados para o &lt;body&gt;</label>
+            <textarea id="input-custom-body" class="form-control code-input" rows="3" placeholder="<!-- Seus scripts de body aqui -->"></textarea>
+          </div>
+
+        </section>
+
+        <!-- Tab 5: Código & Exportação -->
+        <section id="tab-code" class="tab-content">
+          
+          <div class="code-export-toolbar">
+            <button class="btn btn-outline btn-sm code-tab-btn active" data-codetab="code-html">index.html</button>
+            <button class="btn btn-outline btn-sm code-tab-btn" data-codetab="code-css">styles.css</button>
+            <button class="btn btn-outline btn-sm code-tab-btn" data-codetab="code-js">tracking.js</button>
+            <button id="btn-copy-code" class="btn btn-secondary btn-sm ml-auto">Copiar Código</button>
+          </div>
+
+          <div class="code-view-container">
+            <pre><code id="code-display" class="language-html"></code></pre>
+          </div>
+
+          <div class="deploy-banner">
+            <h3>⚡ Prático para Hostinger:</h3>
+            <p>1. Clique em <strong>Baixar Pacote (.zip)</strong>.<br/>2. Abra o Gerenciador de Arquivos da Hostinger na pasta do seu domínio.<br/>3. Extraia o arquivo zip. Sua Presell estará 100% pronta e ativa no ar!</p>
+          </div>
+
+        </section>
+
+      </div>
+    </aside>
+
+    <!-- Interactive Live Preview Screen -->
+    <main class="preview-stage">
+      <div class="stage-header">
+        <div class="stage-title">Simulador / Preview em Tempo Real</div>
+        <div class="device-selector">
+          <button id="view-desktop" class="device-btn active" title="Visualização Desktop">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Desktop
+          </button>
+          <button id="view-mobile" class="device-btn" title="Visualização Mobile">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            Mobile
+          </button>
+        </div>
+        <button id="btn-test-link" class="btn btn-outline btn-sm">
+          ⚡ Testar com ?gclid=TESTE_123
+        </button>
+      </div>
+
+      <div class="viewport-wrapper device-desktop" id="viewport-container">
+        <!-- Live iframe sandbox rendering generated presell -->
+        <iframe id="preview-iframe" title="Presell Live Preview"></iframe>
+      </div>
+    </main>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
