@@ -9,6 +9,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   const STORAGE_KEY = 'presell_studio_saved_state_v3';
+  const PROJECTS_KEY = 'presell_studio_projects_v4';
 
   // Default Initial State
   const defaultState = {
@@ -65,10 +66,31 @@ document.addEventListener('DOMContentLoaded', () => {
     customBody: ''
   };
 
+  // Projects Store State
+  let projects = {
+    'default': {
+      id: 'default',
+      name: 'Femicore - ClickBank (Exemplo)',
+      state: { ...defaultState }
+    }
+  };
+  let activeProjectId = 'default';
   let state = { ...defaultState };
 
   // DOM Element Handles
   const elements = {
+    // Project Bar Controls
+    selectProject: document.getElementById('select-project'),
+    btnSaveProject: document.getElementById('btn-save-project'),
+    btnNewProject: document.getElementById('btn-new-project'),
+    btnDeleteProject: document.getElementById('btn-delete-project'),
+
+    // AI Generator Controls
+    selectAiLang: document.getElementById('select-ai-lang'),
+    selectAiNiche: document.getElementById('select-ai-niche'),
+    btnGenerateAiCopy: document.getElementById('btn-generate-ai-copy'),
+
+    // Inputs
     platform: document.getElementById('input-platform'),
     afflink: document.getElementById('input-afflink'),
     productName: document.getElementById('input-product-name'),
@@ -130,25 +152,305 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let toastTimeout = null;
 
-  function saveStateToLocalStorage() {
+  function loadProjectsFromLocalStorage() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const savedProjects = localStorage.getItem(PROJECTS_KEY);
+      if (savedProjects) {
+        const parsed = JSON.parse(savedProjects);
+        if (parsed.projects && Object.keys(parsed.projects).length > 0) {
+          projects = parsed.projects;
+          activeProjectId = parsed.activeProjectId || Object.keys(projects)[0];
+        }
+      } else {
+        const legacySaved = localStorage.getItem(STORAGE_KEY);
+        if (legacySaved) {
+          const parsedLegacy = JSON.parse(legacySaved);
+          projects['default'].state = { ...defaultState, ...parsedLegacy };
+        }
+      }
     } catch (e) {
-      console.warn('LocalStorage save failed:', e);
+      console.warn('Projects load failed:', e);
+    }
+
+    if (!projects[activeProjectId]) {
+      activeProjectId = Object.keys(projects)[0] || 'default';
+    }
+
+    state = { ...defaultState, ...(projects[activeProjectId] ? projects[activeProjectId].state : {}) };
+    updateProjectDropdown();
+    syncStateToInputs();
+  }
+
+  function saveProjectsToLocalStorage() {
+    try {
+      if (projects[activeProjectId]) {
+        projects[activeProjectId].state = { ...state };
+        if (state.productName && state.productName.trim() !== '') {
+          projects[activeProjectId].name = state.productName;
+        }
+      }
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify({
+        projects,
+        activeProjectId
+      }));
+      updateProjectDropdown();
+    } catch (e) {
+      console.warn('Projects save failed:', e);
     }
   }
 
-  function loadStateFromLocalStorage() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        state = { ...defaultState, ...parsed };
-      }
-    } catch (e) {
-      console.warn('LocalStorage load failed:', e);
-    }
+  function updateProjectDropdown() {
+    if (!elements.selectProject) return;
+    elements.selectProject.innerHTML = '';
+    Object.keys(projects).forEach(id => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = projects[id].name || `Projeto ${id}`;
+      if (id === activeProjectId) option.selected = true;
+      elements.selectProject.appendChild(option);
+    });
+  }
+
+  function switchProject(id) {
+    if (!projects[id]) return;
+    activeProjectId = id;
+    state = { ...defaultState, ...projects[id].state };
+    saveProjectsToLocalStorage();
     syncStateToInputs();
+    render();
+    showToast(`📁 Projeto alternado para: "${projects[id].name}"`);
+  }
+
+  function createNewProject() {
+    const projName = prompt('Digite o nome do novo projeto de Presell:', 'Novo Projeto - ' + (Object.keys(projects).length + 1));
+    if (!projName || !projName.trim()) return;
+
+    const newId = 'proj_' + Date.now();
+    projects[newId] = {
+      id: newId,
+      name: projName.trim(),
+      state: { ...emptyState, productName: projName.trim() }
+    };
+    switchProject(newId);
+    showToast(`✨ Novo projeto "${projName.trim()}" criado com sucesso!`);
+  }
+
+  function deleteCurrentProject() {
+    const keys = Object.keys(projects);
+    if (keys.length <= 1) {
+      alert('Você precisa ter pelo menos um projeto cadastrado!');
+      return;
+    }
+
+    const currentName = projects[activeProjectId] ? projects[activeProjectId].name : activeProjectId;
+    if (!confirm(`Tem certeza que deseja excluir o projeto "${currentName}"?`)) return;
+
+    delete projects[activeProjectId];
+    activeProjectId = Object.keys(projects)[0];
+    state = { ...defaultState, ...projects[activeProjectId].state };
+    saveProjectsToLocalStorage();
+    syncStateToInputs();
+    render();
+    showToast(`🗑️ Projeto excluído com sucesso!`);
+  }
+
+  function generateAiCopy() {
+    const lang = elements.selectAiLang ? elements.selectAiLang.value : 'pt';
+    const niche = elements.selectAiNiche ? elements.selectAiNiche.value : 'health';
+    const prodName = state.productName || (lang === 'en' ? 'Official Solution' : lang === 'es' ? 'Solución Oficial' : 'Fórmula Oficial');
+
+    const copyBank = {
+      pt: {
+        health: {
+          cookie: {
+            title: 'Aviso de Verificação & Termos de Uso',
+            text: `Para garantir a segurança dos nossos utilizadores e a conformidade com as diretrizes oficiais de saúde do ${prodName}, utilizamos cookies de sessão temporários. Ao prosseguir, você confirma que possui idade legal e aceita visualizar a apresentação em vídeo.`,
+            accept: 'Continuar para a Apresentação Oficial',
+            decline: 'Sair da Página'
+          },
+          quiz: {
+            q1: 'Você busca uma alternativa 100% natural e comprovada para melhorar sua saúde diária?',
+            q2: 'Com que frequência você sente cansaço ou falta de disposição ao longo do dia?',
+            q3: 'Você está preparado(a) para assistir a uma explicação em vídeo de 5 minutos com a solução?'
+          },
+          adv: {
+            headline: `REVELADO: Descubra o Ritual Matinal Natural que Está Impressionando Médicos e Nutricionistas em 2026`,
+            subheadline: `Nova pesquisa científica em universidades de ponta revela como o composto do ${prodName} atua na causa raiz sem a necessidade de dietas extremas.`,
+            button: 'Assistir ao Vídeo Explicativo e Oferta Especial »'
+          }
+        },
+        brand: {
+          cookie: {
+            title: 'Portal Oficial de Distribuição',
+            text: `Bem-vindo à página de validação direta do fornecedor oficial do ${prodName}. Usamos cookies de rastreamento de estoque para garantir a reserva do seu desconto de até 75% durante esta sessão.`,
+            accept: 'Garantir Meu Desconto do Produtor',
+            decline: 'Recusar Oferta'
+          },
+          quiz: {
+            q1: 'Você está buscando adquirir o produto com garantia de autenticidade direta do fabricante?',
+            q2: 'Deseja ter direito a frete grátis e aos bônus exclusivos da campanha de lançamento?',
+            q3: 'Pronto para verificar a disponibilidade de estoque na sua região em tempo real?'
+          },
+          adv: {
+            headline: `ALERTAS AO CONSUMIDOR: Onde Comprar o ${prodName} com Garantia Total do Fabricante e Entrega Rápida`,
+            subheadline: `Confira a análise completa de satisfação do cliente, tabela de preços promocionais e como evitar réplicas não autorizadas na internet.`,
+            button: 'Ir para o Site Oficial com Garantia de 60 Dias »'
+          }
+        },
+        finance: {
+          cookie: {
+            title: 'Verificação de Elegibilidade de Acesso',
+            text: `Utilizamos cookies de criptografia para proteger seu acesso ao método exclusivo. Ao continuar, você concorda que esta apresentação contém estratégias práticas e confidenciais de resultados diários.`,
+            accept: 'Acessar Treinamento Exclusivo',
+            decline: 'Não Tenho Interesse'
+          },
+          quiz: {
+            q1: 'Você tem pelo menos 30 minutos livres por dia para aplicar um passo a passo simples?',
+            q2: 'Qual é a sua meta de faturamento mensal complementar para os próximos 90 dias?',
+            q3: 'Você possui um celular ou computador com conexão de internet para começar hoje?'
+          },
+          adv: {
+            headline: `NOVA DESCOBERTA: Como Pessoas Comuns Estão Gerando Renda Extra Diária Utilizando a Internet`,
+            subheadline: `Sem precisar de experiência prévia ou grandes investimentos inicial. Entenda a metodologia simplificada passo a passo nesta aula gratuita.`,
+            button: 'Ver Apresentação Gratuita de Acesso Imediato »'
+          }
+        }
+      },
+      en: {
+        health: {
+          cookie: {
+            title: 'User Verification & Privacy Consent Notice',
+            text: `To ensure security standards and compliance for ${prodName}, we use temporary session cookies. By clicking accept below, you confirm eligibility to watch the official educational video.`,
+            accept: 'Continue to Official Video Presentation',
+            decline: 'Decline & Exit'
+          },
+          quiz: {
+            q1: 'Are you looking for a 100% natural and safe daily solution to support your overall wellness?',
+            q2: 'How often do you experience mid-day fatigue or sluggish energy levels?',
+            q3: 'Are you prepared to watch a short 5-minute video presenting the scientific breakthrough?'
+          },
+          adv: {
+            headline: `BREAKTHROUGH REPORT: Top Experts Discover Natural Daily Ritual Taking The Wellness World By Storm in 2026`,
+            subheadline: `Recent clinical trials reveal how the active formula in ${prodName} targets the core root cause without harsh side effects or strict regimens.`,
+            button: 'Watch the Official Presentation Now »'
+          }
+        },
+        brand: {
+          cookie: {
+            title: 'Official Distribution & Inventory Gateway',
+            text: `Welcome to the official vendor validation portal for ${prodName}. We use session cookies to secure your reserved discount of up to 75% for this browser session.`,
+            accept: 'Claim My Producer Discount Now',
+            decline: 'No Thanks'
+          },
+          quiz: {
+            q1: 'Are you looking to order directly from the official manufacturer with authentic supply guarantee?',
+            q2: 'Would you like to qualify for free shipping and bonus guide digital downloads?',
+            q3: 'Are you ready to check current inventory availability for your zip code?'
+          },
+          adv: {
+            headline: `BUYER\'S GUIDE: How to Secure ${prodName} with 100% Money-Back Guarantee & Special Pricing`,
+            subheadline: `Read the verified customer review breakdown, price comparison, and official order dispatch protocols for instant savings.`,
+            button: 'Visit Official Manufacturer Website »'
+          }
+        },
+        finance: {
+          cookie: {
+            title: 'Security Verification & Access Consent',
+            text: `We utilize encrypted browser cookies to protect access to this training. By proceeding, you acknowledge this video contains proprietary step-by-step strategies.`,
+            accept: 'Proceed to Free Masterclass',
+            decline: 'Leave Page'
+          },
+          quiz: {
+            q1: 'Do you have 30 to 45 minutes of spare time daily to follow a structured online workflow?',
+            q2: 'What is your primary income target over the next 90 days?',
+            q3: 'Do you have access to a smartphone or computer with internet connection?'
+          },
+          adv: {
+            headline: `FINANCIAL TREND 2026: Simple Online Method Empowers Everyday People to Build Extra Daily Cashflow`,
+            subheadline: `No prior technical experience required. Watch the official breakdown showing how the automated blueprint works from scratch.`,
+            button: 'Watch Instant Free Presentation »'
+          }
+        }
+      },
+      es: {
+        health: {
+          cookie: {
+            title: 'Aviso de Verificación y Consentimiento de Privacidad',
+            text: `Para garantizar los estándares de seguridad y cumplimiento normativo para ${prodName}, utilizamos cookies de sesión. Al hacer clic en aceptar, confirma su elegibilidad para ver la presentación oficial.`,
+            accept: 'Continuar a la Presentación Oficial',
+            decline: 'Rechazar y Salir'
+          },
+          quiz: {
+            q1: '¿Busca una alternativa 100% natural y segura para optimizar su bienestar diario?',
+            q2: '¿Con qué frecuencia siente falta de energía o fatiga a lo largo del día?',
+            q3: '¿Está preparado(a) para ver un breve video explicativo de 5 minutos con la solución?'
+          },
+          adv: {
+            headline: `REPORTE REVELADOR: Expertos Descubren Método Natural que Está Revolucionando la Industria en 2026`,
+            subheadline: `Nuevos estudios clínicos muestran cómo la fórmula activa de ${prodName} combate la causa raíz de forma segura y efectiva.`,
+            button: 'Ver Presentación Oficial en Video »'
+          }
+        },
+        brand: {
+          cookie: {
+            title: 'Portal Oficial de Distribución y Garantía',
+            text: `Bienvenido al portal oficial del fabricante de ${prodName}. Utilizamos cookies para asegurar su descuento exclusivo de hasta un 75% durante esta sesión.`,
+            accept: 'Obtener Mi Descuento de Fabricante',
+            decline: 'Rechazar Oferta'
+          },
+          quiz: {
+            q1: '¿Desea adquirir el producto original directamente de la fuente oficial con garantía total?',
+            q2: '¿Quiere calificar para envío gratuito y bonos exclusivos de la campaña oficial?',
+            q3: '¿Listo para verificar la disponibilidad de inventario en su región en tiempo real?'
+          },
+          adv: {
+            headline: `GUÍA DEL COMPRADOR: Cómo Adquirir el ${prodName} Original con Garantía de 60 Días`,
+            subheadline: `Revise el análisis de satisfacción de los clientes, tabla de precios promocionales y cómo asegurar su pedido sin intermediarios.`,
+            button: 'Ir al Sitio Oficial con Garantía Total »'
+          }
+        },
+        finance: {
+          cookie: {
+            title: 'Verificación de Acceso Seguro',
+            text: `Utilizamos cookies cifradas para proteger el acceso a esta presentación exclusiva. Al continuar, acepta que los métodos presentados son de carácter educativo.`,
+            accept: 'Acceder a la Clase Gratuita',
+            decline: 'Salir'
+          },
+          quiz: {
+            q1: '¿Dispone de 30 a 45 minutos libres al día para seguir un método paso a paso?',
+            q2: '¿Cuál es su meta de ingresos adicionales para los próximos 90 días?',
+            q3: '¿Cuenta con un celular o computadora con conexión a internet para comenzar hoy?'
+          },
+          adv: {
+            headline: `TENDENCIA 2026: Descubra el Método en Línea que Permite Generar Ingresos Extra Diarios`,
+            subheadline: `Sin necesidad de experiencia previa ni grandes inversiones. Vea la presentación oficial en video y aprenda cómo comenzar.`,
+            button: 'Ver Presentación Gratuita Ahora »'
+          }
+        }
+      }
+    };
+
+    const selectedCopy = (copyBank[lang] && copyBank[lang][niche]) ? copyBank[lang][niche] : copyBank.pt.health;
+
+    if (state.template === 'cookie') {
+      state.modalTitle = selectedCopy.cookie.title;
+      state.modalText = selectedCopy.cookie.text;
+      state.btnAccept = selectedCopy.cookie.accept;
+      state.btnDecline = selectedCopy.cookie.decline;
+    } else if (state.template === 'quiz') {
+      state.quizQ1 = selectedCopy.quiz.q1;
+      state.quizQ2 = selectedCopy.quiz.q2;
+      state.quizQ3 = selectedCopy.quiz.q3;
+    } else if (state.template === 'advertorial') {
+      state.advHeadline = selectedCopy.adv.headline;
+      state.advSubheadline = selectedCopy.adv.subheadline;
+      state.advButton = selectedCopy.adv.button;
+    }
+
+    saveProjectsToLocalStorage();
+    syncStateToInputs();
+    render();
+    showToast(`✨ Copy em ${lang.toUpperCase()} (${niche.toUpperCase()}) gerada com sucesso!`);
   }
 
   function syncStateToInputs() {
@@ -249,6 +551,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Event Listeners
   function bindInputEvents() {
+
+    // Project Management Listeners
+    if (elements.selectProject) {
+      elements.selectProject.addEventListener('change', (e) => {
+        switchProject(e.target.value);
+      });
+    }
+    if (elements.btnSaveProject) {
+      elements.btnSaveProject.addEventListener('click', () => {
+        saveProjectsToLocalStorage();
+        showToast(`💾 Projeto "${projects[activeProjectId]?.name || activeProjectId}" salvo com sucesso!`);
+      });
+    }
+    if (elements.btnNewProject) {
+      elements.btnNewProject.addEventListener('click', createNewProject);
+    }
+    if (elements.btnDeleteProject) {
+      elements.btnDeleteProject.addEventListener('click', deleteCurrentProject);
+    }
+
+    // AI Copy Generator Listener
+    if (elements.btnGenerateAiCopy) {
+      elements.btnGenerateAiCopy.addEventListener('click', generateAiCopy);
+    }
+
 
     // Template Radio Cards Switcher
     document.querySelectorAll('.template-card').forEach(card => {
@@ -401,7 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function onStateChanged(toastMsg) {
-    saveStateToLocalStorage();
+    saveProjectsToLocalStorage();
     render();
     if (toastMsg) showToast(toastMsg);
   }
@@ -851,7 +1178,7 @@ fbq('track', 'PageView');
   }
 
   // Initialize
-  loadStateFromLocalStorage();
+  loadProjectsFromLocalStorage();
   bindInputEvents();
   render();
 });
