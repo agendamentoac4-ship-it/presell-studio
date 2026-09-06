@@ -1,5 +1,5 @@
 /**
- * Presell Studio App (app.js v2.1)
+ * Presell Studio App (app.js v2.2)
  * Real-time code generation, interactive iframe preview, multi-platform parameter engine,
  * pixel injectors (GTM, GA4, GTag, Meta, TikTok), 1-click ZIP export, LocalStorage persistence,
  * and local background image file upload.
@@ -9,12 +9,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const STORAGE_KEY = 'presell_studio_saved_state_v2';
 
-  // Default Initial State
+  // Default Initial State (Sample template)
   const defaultState = {
     platform: 'clickbank',
     afflink: 'https://62379g035eoa2xdeo7nx0qlsf9.hop.clickbank.net',
     productName: 'Femicore Supplement',
     bgUrl: 'https://s3.eu-central-2.wasabisys.com/w.storage.screenshotapi.net/getfemicore_com_text_nhl2_php_hopid_1cb1f747_e730__4e1054324d85.webp',
+    blur: 8,
+    overlayOpacity: 45,
+    modalTitle: 'Configurações de cookies',
+    modalText: 'Usamos cookies e tecnologias semelhantes para ajudar a personalizar o conteúdo, adaptar e medir anúncios e fornecer uma melhor experiência de navegação. Ao clicar em aceitar, você concorda com este uso, conforme descrito em nossa Política de Privacidade.',
+    btnAccept: 'Sim, eu aceito',
+    btnDecline: 'Eu não aceito',
+    showClose: true,
+    pixelGtag: '',
+    pixelGtagLabel: '',
+    pixelGtm: '',
+    pixelGa4: '',
+    pixelFb: '',
+    pixelTiktok: '',
+    customHead: '',
+    customBody: '',
+    activeCodeTab: 'code-html',
+    testQueryString: ''
+  };
+
+  // Clean Empty State for New Presell
+  const emptyState = {
+    platform: 'clickbank',
+    afflink: '',
+    productName: '',
+    bgUrl: '',
     blur: 8,
     overlayOpacity: 45,
     modalTitle: 'Configurações de cookies',
@@ -98,27 +123,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function syncStateToInputs() {
-    elements.platform.value = state.platform || 'clickbank';
-    elements.afflink.value = state.afflink || '';
-    elements.productName.value = state.productName || '';
-    elements.bgUrl.value = state.bgUrl || '';
-    elements.blur.value = state.blur || 8;
-    elements.valBlur.textContent = `${state.blur}px`;
-    elements.overlayOpacity.value = state.overlayOpacity || 45;
-    elements.valOverlay.textContent = `${state.overlayOpacity}%`;
-    elements.modalTitle.value = state.modalTitle || '';
-    elements.modalText.value = state.modalText || '';
-    elements.btnAccept.value = state.btnAccept || '';
-    elements.btnDecline.value = state.btnDecline || '';
-    elements.showClose.checked = state.showClose !== false;
-    elements.pixelGtag.value = state.pixelGtag || '';
-    elements.pixelGtagLabel.value = state.pixelGtagLabel || '';
-    elements.pixelGtm.value = state.pixelGtm || '';
-    elements.pixelGa4.value = state.pixelGa4 || '';
-    elements.pixelFb.value = state.pixelFb || '';
-    elements.pixelTiktok.value = state.pixelTiktok || '';
-    elements.customHead.value = state.customHead || '';
-    elements.customBody.value = state.customBody || '';
+    if (elements.platform) elements.platform.value = state.platform || 'clickbank';
+    if (elements.afflink) elements.afflink.value = state.afflink || '';
+    if (elements.productName) elements.productName.value = state.productName || '';
+    if (elements.bgUrl) elements.bgUrl.value = state.bgUrl || '';
+    if (elements.bgFile) elements.bgFile.value = '';
+    if (elements.blur) {
+      elements.blur.value = state.blur || 8;
+      elements.valBlur.textContent = `${state.blur || 8}px`;
+    }
+    if (elements.overlayOpacity) {
+      elements.overlayOpacity.value = state.overlayOpacity || 45;
+      elements.valOverlay.textContent = `${state.overlayOpacity || 45}%`;
+    }
+    if (elements.modalTitle) elements.modalTitle.value = state.modalTitle || '';
+    if (elements.modalText) elements.modalText.value = state.modalText || '';
+    if (elements.btnAccept) elements.btnAccept.value = state.btnAccept || '';
+    if (elements.btnDecline) elements.btnDecline.value = state.btnDecline || '';
+    if (elements.showClose) elements.showClose.checked = state.showClose !== false;
+    if (elements.pixelGtag) elements.pixelGtag.value = state.pixelGtag || '';
+    if (elements.pixelGtagLabel) elements.pixelGtagLabel.value = state.pixelGtagLabel || '';
+    if (elements.pixelGtm) elements.pixelGtm.value = state.pixelGtm || '';
+    if (elements.pixelGa4) elements.pixelGa4.value = state.pixelGa4 || '';
+    if (elements.pixelFb) elements.pixelFb.value = state.pixelFb || '';
+    if (elements.pixelTiktok) elements.pixelTiktok.value = state.pixelTiktok || '';
+    if (elements.customHead) elements.customHead.value = state.customHead || '';
+    if (elements.customBody) elements.customBody.value = state.customBody || '';
   }
 
   function showToast(msg) {
@@ -128,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => {
       elements.statusToast.classList.add('hidden');
-    }, 2500);
+    }, 3000);
   }
 
   // Bind Form Event Listeners to Update State
@@ -185,16 +215,15 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.customHead.addEventListener('input', (e) => { state.customHead = e.target.value; onStateChanged(); });
     elements.customBody.addEventListener('input', (e) => { state.customBody = e.target.value; onStateChanged(); });
 
-    // Reset / New Project Button
+    // Reset / New Project Button (Clears to clean empty fields)
     if (elements.btnResetState) {
       elements.btnResetState.addEventListener('click', () => {
-        if (confirm('Deseja mesmo limpar o formulário e iniciar uma Nova Presell?')) {
-          localStorage.removeItem(STORAGE_KEY);
-          state = { ...defaultState };
-          syncStateToInputs();
-          render();
-          showToast('Formulário redefinido com sucesso!');
-        }
+        localStorage.removeItem(STORAGE_KEY);
+        state = { ...emptyState };
+        syncStateToInputs();
+        render();
+        showToast('✨ Formulário limpo! Insira os dados da nova Presell.');
+        if (elements.afflink) elements.afflink.focus();
       });
     }
 
@@ -463,7 +492,7 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
     if (state.customBody) bodyScripts.push(state.customBody);
 
     const closeBtnHtml = state.showClose ? `
-      <a href="${state.afflink}" class="modal-close-btn cb-hoplink" aria-label="Fechar">
+      <a href="${state.afflink || '#'}" class="modal-close-btn cb-hoplink" aria-label="Fechar">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
           <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 1 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4Z"/>
         </svg>
@@ -474,7 +503,7 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${escapeHtml(state.productName)} - Verificação</title>
+  <title>${escapeHtml(state.productName || 'Verificação')}</title>
   <link rel="stylesheet" href="styles.css" />
   ${headScripts.join('\n  ')}
   <script src="tracking.js" defer></script>
@@ -497,8 +526,8 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
         <p>${escapeHtml(state.modalText)}</p>
       </div>
       <div class="modal-actions">
-        <a href="${state.afflink}" class="btn btn-primary cb-hoplink">${escapeHtml(state.btnAccept)}</a>
-        <a href="${state.afflink}" class="btn btn-secondary cb-hoplink">${escapeHtml(state.btnDecline)}</a>
+        <a href="${state.afflink || '#'}" class="btn btn-primary cb-hoplink">${escapeHtml(state.btnAccept)}</a>
+        <a href="${state.afflink || '#'}" class="btn btn-secondary cb-hoplink">${escapeHtml(state.btnDecline)}</a>
       </div>
     </div>
   </main>
@@ -534,8 +563,12 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
     elements.previewIframe.srcdoc = fullDoc;
 
     if (elements.previewUrlBadge) {
-      const shortUrl = state.afflink.length > 28 ? state.afflink.substring(0, 25) + '...' : state.afflink;
-      elements.previewUrlBadge.textContent = `Link Ativo: ${shortUrl}`;
+      if (!state.afflink) {
+        elements.previewUrlBadge.textContent = 'Aguardando Link de Afiliado...';
+      } else {
+        const shortUrl = state.afflink.length > 28 ? state.afflink.substring(0, 25) + '...' : state.afflink;
+        elements.previewUrlBadge.textContent = `Link Ativo: ${shortUrl}`;
+      }
     }
   }
 
@@ -545,6 +578,12 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
   }
 
   function exportZipPackage() {
+    if (!state.afflink) {
+      alert('Por favor, insira o seu Link de Afiliado antes de baixar a Presell!');
+      if (elements.afflink) elements.afflink.focus();
+      return;
+    }
+
     if (typeof JSZip === 'undefined') {
       alert('Iniciando download do pacote...');
     }
