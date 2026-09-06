@@ -147,6 +147,24 @@ body {
   border-top: 2px solid var(--primary);
 }
 
+/* Toast Status Banner */
+.status-toast {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.status-toast.hidden {
+  display: none;
+}
+
 /* Tabs Body Form */
 .tabs-body {
   flex: 1;
@@ -191,6 +209,11 @@ body {
   font-size: 0.85rem;
   font-family: inherit;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control.highlight-input {
+  border-color: var(--primary);
+  background: rgba(59, 130, 246, 0.08);
 }
 
 .form-control:focus {
@@ -267,6 +290,13 @@ textarea.form-control {
   text-align: right;
 }
 
+/* Sidebar Footer Action Box */
+.sidebar-footer {
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.9);
+  border-top: 1px solid var(--panel-border);
+}
+
 /* Code Display Tab */
 .code-export-toolbar {
   display: flex;
@@ -335,6 +365,23 @@ textarea.form-control {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.preview-badge {
+  font-size: 0.7rem;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .device-selector {
@@ -411,6 +458,15 @@ textarea.form-control {
   text-decoration: none;
 }
 
+.btn-lg {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.92rem;
+}
+
+.btn-block {
+  width: 100%;
+}
+
 .btn-sm {
   font-size: 0.75rem;
   padding: 0.35rem 0.75rem;
@@ -428,6 +484,7 @@ textarea.form-control {
 .btn-emerald {
   background: var(--accent-emerald);
   color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }
 
 .btn-emerald:hover {
@@ -453,6 +510,10 @@ textarea.form-control {
   border-color: var(--primary);
   color: #ffffff;
   background: rgba(59, 130, 246, 0.1);
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
 }
 
 .ml-auto {

@@ -28,7 +28,7 @@
       </div>
     </div>
     <div class="header-actions">
-      <button id="btn-export-zip" class="btn btn-emerald">
+      <button id="btn-export-zip-header" class="btn btn-emerald btn-export-zip-trigger">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Baixar Pacote (.zip)
       </button>
@@ -59,13 +59,18 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Pixels
         </button>
-        <button class="tab-btn" data-tab="tab-code" role="tab">
+        <button class="tab-btn" id="btn-tab-code" data-tab="tab-code" role="tab">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
           Código
         </button>
       </nav>
 
       <div class="tabs-body">
+
+        <!-- Status Toast Banner -->
+        <div id="status-toast" class="status-toast hidden">
+          ✓ Presell atualizada em tempo real!
+        </div>
 
         <!-- Tab 1: Plataforma & Link -->
         <section id="tab-platform" class="tab-content active">
@@ -84,7 +89,7 @@
 
           <div class="form-group">
             <label for="input-afflink">Link de Afiliado (HopLink / Checkout)</label>
-            <input type="url" id="input-afflink" class="form-control" value="https://62379g035eoa2xdeo7nx0qlsf9.hop.clickbank.net" placeholder="https://seuapelido.vendor.hop.clickbank.net" />
+            <input type="url" id="input-afflink" class="form-control highlight-input" value="https://62379g035eoa2xdeo7nx0qlsf9.hop.clickbank.net" placeholder="https://seuapelido.vendor.hop.clickbank.net" />
             <span class="form-hint">O link para onde o lead será direcionado ao clicar nos botões ou fechar o modal.</span>
           </div>
 
@@ -212,18 +217,33 @@
 
           <div class="deploy-banner">
             <h3>⚡ Prático para Hostinger:</h3>
-            <p>1. Clique em <strong>Baixar Pacote (.zip)</strong>.<br/>2. Abra o Gerenciador de Arquivos da Hostinger na pasta do seu domínio.<br/>3. Extraia o arquivo zip. Sua Presell estará 100% pronta e ativa no ar!</p>
+            <p>1. Clique no botão <strong>Baixar Pacote (.zip)</strong> abaixo.<br/>2. Abra o Gerenciador de Arquivos da Hostinger na pasta do seu domínio.<br/>3. Extraia o arquivo zip. Sua Presell estará 100% pronta e ativa no ar!</p>
           </div>
 
         </section>
 
       </div>
+
+      <!-- Sidebar Action Footer -->
+      <div class="sidebar-footer">
+        <button id="btn-export-zip-footer" class="btn btn-emerald btn-lg btn-block btn-export-zip-trigger">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Baixar Pacote Presell (.zip)
+        </button>
+        <button id="btn-view-code-footer" class="btn btn-outline btn-block mt-2">
+          👁️ Ver / Copiar Código Gerado
+        </button>
+      </div>
+
     </aside>
 
     <!-- Interactive Live Preview Screen -->
     <main class="preview-stage">
       <div class="stage-header">
-        <div class="stage-title">Simulador / Preview em Tempo Real</div>
+        <div class="stage-title">
+          Simulador / Preview em Tempo Real 
+          <span id="preview-url-badge" class="preview-badge">Link Ativo: 62379g035e...</span>
+        </div>
         <div class="device-selector">
           <button id="view-desktop" class="device-btn active" title="Visualização Desktop">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>

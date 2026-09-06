@@ -56,20 +56,40 @@ document.addEventListener('DOMContentLoaded', () => {
     customBody: document.getElementById('input-custom-body'),
     previewIframe: document.getElementById('preview-iframe'),
     codeDisplay: document.getElementById('code-display'),
-    btnExportZip: document.getElementById('btn-export-zip'),
     btnCopyCode: document.getElementById('btn-copy-code'),
     btnTestLink: document.getElementById('btn-test-link'),
     viewportContainer: document.getElementById('viewport-container'),
     viewDesktop: document.getElementById('view-desktop'),
-    viewMobile: document.getElementById('view-mobile')
+    viewMobile: document.getElementById('view-mobile'),
+    statusToast: document.getElementById('status-toast'),
+    previewUrlBadge: document.getElementById('preview-url-badge'),
+    btnTabCode: document.getElementById('btn-tab-code'),
+    btnViewCodeFooter: document.getElementById('btn-view-code-footer')
   };
+
+  let toastTimeout = null;
+
+  function showToast(msg) {
+    if (!elements.statusToast) return;
+    elements.statusToast.textContent = msg || '✓ Presell atualizada em tempo real!';
+    elements.statusToast.classList.remove('hidden');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      elements.statusToast.classList.add('hidden');
+    }, 2500);
+  }
 
   // Bind Form Event Listeners to Update State
   function bindInputEvents() {
-    elements.platform.addEventListener('change', (e) => { state.platform = e.target.value; render(); });
-    elements.afflink.addEventListener('input', (e) => { state.afflink = e.target.value.trim(); render(); });
+    elements.platform.addEventListener('change', (e) => { state.platform = e.target.value; render(); showToast('Plataforma atualizada!'); });
+    elements.afflink.addEventListener('input', (e) => { 
+      state.afflink = e.target.value.trim(); 
+      render(); 
+      showToast('Link de Afiliado atualizado no preview e no código!'); 
+    });
+
     elements.productName.addEventListener('input', (e) => { state.productName = e.target.value; render(); });
-    elements.bgUrl.addEventListener('input', (e) => { state.bgUrl = e.target.value.trim(); render(); });
+    elements.bgUrl.addEventListener('input', (e) => { state.bgUrl = e.target.value.trim(); render(); showToast('Imagem de fundo atualizada!'); });
     
     elements.blur.addEventListener('input', (e) => {
       state.blur = e.target.value;
@@ -101,12 +121,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // UI Tab Navigation
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.tab).classList.add('active');
+        switchTab(btn.dataset.tab, btn);
       });
     });
+
+    if (elements.btnViewCodeFooter) {
+      elements.btnViewCodeFooter.addEventListener('click', () => {
+        switchTab('tab-code', elements.btnTabCode);
+      });
+    }
 
     // Code Tab Switcher
     document.querySelectorAll('.code-tab-btn').forEach(btn => {
@@ -148,8 +171,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Export ZIP Button
-    elements.btnExportZip.addEventListener('click', exportZipPackage);
+    // Export ZIP Triggers
+    document.querySelectorAll('.btn-export-zip-trigger').forEach(btn => {
+      btn.addEventListener('click', exportZipPackage);
+    });
+  }
+
+  function switchTab(tabId, btnEl) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+    const targetTab = document.getElementById(tabId);
+    if (targetTab) targetTab.classList.add('active');
+    updateCodeView();
   }
 
   // Code Generator Functions
@@ -412,6 +446,11 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
       .replace('<script src="tracking.js" defer></script>', `<script>${jsContent}</script>`);
 
     elements.previewIframe.srcdoc = fullDoc;
+
+    if (elements.previewUrlBadge) {
+      const shortUrl = state.afflink.length > 28 ? state.afflink.substring(0, 25) + '...' : state.afflink;
+      elements.previewUrlBadge.textContent = `Link Ativo: ${shortUrl}`;
+    }
   }
 
   function render() {
