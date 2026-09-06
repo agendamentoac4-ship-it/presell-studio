@@ -1,13 +1,16 @@
 /**
- * Presell Studio App (app.js)
+ * Presell Studio App (app.js v2.1)
  * Real-time code generation, interactive iframe preview, multi-platform parameter engine,
- * pixel injectors (GTM, GA4, GTag, Meta, TikTok), and 1-click ZIP export.
+ * pixel injectors (GTM, GA4, GTag, Meta, TikTok), 1-click ZIP export, LocalStorage persistence,
+ * and local background image file upload.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // State Store
-  const state = {
+  const STORAGE_KEY = 'presell_studio_saved_state_v2';
+
+  // Default Initial State
+  const defaultState = {
     platform: 'clickbank',
     afflink: 'https://62379g035eoa2xdeo7nx0qlsf9.hop.clickbank.net',
     productName: 'Femicore Supplement',
@@ -31,12 +34,15 @@ document.addEventListener('DOMContentLoaded', () => {
     testQueryString: ''
   };
 
+  let state = { ...defaultState };
+
   // DOM Element Handles
   const elements = {
     platform: document.getElementById('input-platform'),
     afflink: document.getElementById('input-afflink'),
     productName: document.getElementById('input-product-name'),
     bgUrl: document.getElementById('input-bg-url'),
+    bgFile: document.getElementById('input-bg-file'),
     blur: document.getElementById('input-blur'),
     valBlur: document.getElementById('val-blur'),
     overlayOpacity: document.getElementById('input-overlay-opacity'),
@@ -64,14 +70,60 @@ document.addEventListener('DOMContentLoaded', () => {
     statusToast: document.getElementById('status-toast'),
     previewUrlBadge: document.getElementById('preview-url-badge'),
     btnTabCode: document.getElementById('btn-tab-code'),
-    btnViewCodeFooter: document.getElementById('btn-view-code-footer')
+    btnViewCodeFooter: document.getElementById('btn-view-code-footer'),
+    btnResetState: document.getElementById('btn-reset-state')
   };
 
   let toastTimeout = null;
 
+  function saveStateToLocalStorage() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
+  }
+
+  function loadStateFromLocalStorage() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        state = { ...defaultState, ...parsed };
+        syncStateToInputs();
+      }
+    } catch (e) {
+      console.warn('LocalStorage load failed:', e);
+    }
+  }
+
+  function syncStateToInputs() {
+    elements.platform.value = state.platform || 'clickbank';
+    elements.afflink.value = state.afflink || '';
+    elements.productName.value = state.productName || '';
+    elements.bgUrl.value = state.bgUrl || '';
+    elements.blur.value = state.blur || 8;
+    elements.valBlur.textContent = `${state.blur}px`;
+    elements.overlayOpacity.value = state.overlayOpacity || 45;
+    elements.valOverlay.textContent = `${state.overlayOpacity}%`;
+    elements.modalTitle.value = state.modalTitle || '';
+    elements.modalText.value = state.modalText || '';
+    elements.btnAccept.value = state.btnAccept || '';
+    elements.btnDecline.value = state.btnDecline || '';
+    elements.showClose.checked = state.showClose !== false;
+    elements.pixelGtag.value = state.pixelGtag || '';
+    elements.pixelGtagLabel.value = state.pixelGtagLabel || '';
+    elements.pixelGtm.value = state.pixelGtm || '';
+    elements.pixelGa4.value = state.pixelGa4 || '';
+    elements.pixelFb.value = state.pixelFb || '';
+    elements.pixelTiktok.value = state.pixelTiktok || '';
+    elements.customHead.value = state.customHead || '';
+    elements.customBody.value = state.customBody || '';
+  }
+
   function showToast(msg) {
     if (!elements.statusToast) return;
-    elements.statusToast.textContent = msg || '✓ Presell atualizada em tempo real!';
+    elements.statusToast.textContent = msg || '✓ Presell atualizada e salva automaticamente!';
     elements.statusToast.classList.remove('hidden');
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => {
@@ -81,42 +133,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Bind Form Event Listeners to Update State
   function bindInputEvents() {
-    elements.platform.addEventListener('change', (e) => { state.platform = e.target.value; render(); showToast('Plataforma atualizada!'); });
+    elements.platform.addEventListener('change', (e) => { state.platform = e.target.value; onStateChanged('Plataforma atualizada!'); });
     elements.afflink.addEventListener('input', (e) => { 
       state.afflink = e.target.value.trim(); 
-      render(); 
-      showToast('Link de Afiliado atualizado no preview e no código!'); 
+      onStateChanged('Link de Afiliado atualizado e salvo!'); 
     });
 
-    elements.productName.addEventListener('input', (e) => { state.productName = e.target.value; render(); });
-    elements.bgUrl.addEventListener('input', (e) => { state.bgUrl = e.target.value.trim(); render(); showToast('Imagem de fundo atualizada!'); });
+    elements.productName.addEventListener('input', (e) => { state.productName = e.target.value; onStateChanged(); });
+    elements.bgUrl.addEventListener('input', (e) => { state.bgUrl = e.target.value.trim(); onStateChanged('Imagem de fundo atualizada!'); });
     
+    // File Upload Reader for Producer Page Image Screenshot
+    if (elements.bgFile) {
+      elements.bgFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            state.bgUrl = event.target.result;
+            elements.bgUrl.value = state.bgUrl;
+            onStateChanged('Imagem enviada do computador com sucesso!');
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
     elements.blur.addEventListener('input', (e) => {
       state.blur = e.target.value;
       elements.valBlur.textContent = `${state.blur}px`;
-      render();
+      onStateChanged();
     });
 
     elements.overlayOpacity.addEventListener('input', (e) => {
       state.overlayOpacity = e.target.value;
       elements.valOverlay.textContent = `${state.overlayOpacity}%`;
-      render();
+      onStateChanged();
     });
 
-    elements.modalTitle.addEventListener('input', (e) => { state.modalTitle = e.target.value; render(); });
-    elements.modalText.addEventListener('input', (e) => { state.modalText = e.target.value; render(); });
-    elements.btnAccept.addEventListener('input', (e) => { state.btnAccept = e.target.value; render(); });
-    elements.btnDecline.addEventListener('input', (e) => { state.btnDecline = e.target.value; render(); });
-    elements.showClose.addEventListener('change', (e) => { state.showClose = e.target.checked; render(); });
+    elements.modalTitle.addEventListener('input', (e) => { state.modalTitle = e.target.value; onStateChanged(); });
+    elements.modalText.addEventListener('input', (e) => { state.modalText = e.target.value; onStateChanged(); });
+    elements.btnAccept.addEventListener('input', (e) => { state.btnAccept = e.target.value; onStateChanged(); });
+    elements.btnDecline.addEventListener('input', (e) => { state.btnDecline = e.target.value; onStateChanged(); });
+    elements.showClose.addEventListener('change', (e) => { state.showClose = e.target.checked; onStateChanged(); });
 
-    elements.pixelGtag.addEventListener('input', (e) => { state.pixelGtag = e.target.value.trim(); render(); });
-    elements.pixelGtagLabel.addEventListener('input', (e) => { state.pixelGtagLabel = e.target.value.trim(); render(); });
-    elements.pixelGtm.addEventListener('input', (e) => { state.pixelGtm = e.target.value.trim(); render(); });
-    elements.pixelGa4.addEventListener('input', (e) => { state.pixelGa4 = e.target.value.trim(); render(); });
-    elements.pixelFb.addEventListener('input', (e) => { state.pixelFb = e.target.value.trim(); render(); });
-    elements.pixelTiktok.addEventListener('input', (e) => { state.pixelTiktok = e.target.value.trim(); render(); });
-    elements.customHead.addEventListener('input', (e) => { state.customHead = e.target.value; render(); });
-    elements.customBody.addEventListener('input', (e) => { state.customBody = e.target.value; render(); });
+    elements.pixelGtag.addEventListener('input', (e) => { state.pixelGtag = e.target.value.trim(); onStateChanged(); });
+    elements.pixelGtagLabel.addEventListener('input', (e) => { state.pixelGtagLabel = e.target.value.trim(); onStateChanged(); });
+    elements.pixelGtm.addEventListener('input', (e) => { state.pixelGtm = e.target.value.trim(); onStateChanged(); });
+    elements.pixelGa4.addEventListener('input', (e) => { state.pixelGa4 = e.target.value.trim(); onStateChanged(); });
+    elements.pixelFb.addEventListener('input', (e) => { state.pixelFb = e.target.value.trim(); onStateChanged(); });
+    elements.pixelTiktok.addEventListener('input', (e) => { state.pixelTiktok = e.target.value.trim(); onStateChanged(); });
+    elements.customHead.addEventListener('input', (e) => { state.customHead = e.target.value; onStateChanged(); });
+    elements.customBody.addEventListener('input', (e) => { state.customBody = e.target.value; onStateChanged(); });
+
+    // Reset / New Project Button
+    if (elements.btnResetState) {
+      elements.btnResetState.addEventListener('click', () => {
+        if (confirm('Deseja mesmo limpar o formulário e iniciar uma Nova Presell?')) {
+          localStorage.removeItem(STORAGE_KEY);
+          state = { ...defaultState };
+          syncStateToInputs();
+          render();
+          showToast('Formulário redefinido com sucesso!');
+        }
+      });
+    }
 
     // UI Tab Navigation
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -175,6 +255,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.btn-export-zip-trigger').forEach(btn => {
       btn.addEventListener('click', exportZipPackage);
     });
+  }
+
+  function onStateChanged(toastMsg) {
+    saveStateToLocalStorage();
+    render();
+    if (toastMsg) showToast(toastMsg);
   }
 
   function switchTab(tabId, btnEl) {
@@ -487,6 +573,7 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
   }
 
   // Initialize
+  loadStateFromLocalStorage();
   bindInputEvents();
   render();
 });
