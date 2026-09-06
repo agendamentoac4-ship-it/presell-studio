@@ -1,8 +1,8 @@
 /**
- * Presell Studio App (app.js v2.2)
+ * Presell Studio App (app.js v2.3)
  * Real-time code generation, interactive iframe preview, multi-platform parameter engine,
  * pixel injectors (GTM, GA4, GTag, Meta, TikTok), 1-click ZIP export, LocalStorage persistence,
- * and local background image file upload.
+ * local background image file upload, and Auto-Screenshot Extractor.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -96,7 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
     previewUrlBadge: document.getElementById('preview-url-badge'),
     btnTabCode: document.getElementById('btn-tab-code'),
     btnViewCodeFooter: document.getElementById('btn-view-code-footer'),
-    btnResetState: document.getElementById('btn-reset-state')
+    btnResetState: document.getElementById('btn-reset-state'),
+    btnAutoScreenshot: document.getElementById('btn-auto-screenshot')
   };
 
   let toastTimeout = null;
@@ -161,6 +162,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3000);
   }
 
+  function captureAutoScreenshot() {
+    if (!state.afflink) {
+      alert('Por favor, insira o seu Link de Afiliado para capturar o print da VSL!');
+      if (elements.afflink) elements.afflink.focus();
+      return;
+    }
+
+    const targetUrl = state.afflink;
+    // Auto-generate high resolution screenshot background
+    const screenshotUrl = `https://image.thum.io/get/width/1200/crop/800/${targetUrl}`;
+
+    state.bgUrl = screenshotUrl;
+    if (elements.bgUrl) elements.bgUrl.value = screenshotUrl;
+
+    onStateChanged('📸 Print da página do produtor capturado automaticamente!');
+  }
+
   // Bind Form Event Listeners to Update State
   function bindInputEvents() {
     elements.platform.addEventListener('change', (e) => { state.platform = e.target.value; onStateChanged('Plataforma atualizada!'); });
@@ -168,6 +186,10 @@ document.addEventListener('DOMContentLoaded', () => {
       state.afflink = e.target.value.trim(); 
       onStateChanged('Link de Afiliado atualizado e salvo!'); 
     });
+
+    if (elements.btnAutoScreenshot) {
+      elements.btnAutoScreenshot.addEventListener('click', captureAutoScreenshot);
+    }
 
     elements.productName.addEventListener('input', (e) => { state.productName = e.target.value; onStateChanged(); });
     elements.bgUrl.addEventListener('input', (e) => { state.bgUrl = e.target.value.trim(); onStateChanged('Imagem de fundo atualizada!'); });
@@ -494,7 +516,7 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
     const closeBtnHtml = state.showClose ? `
       <a href="${state.afflink || '#'}" class="modal-close-btn cb-hoplink" aria-label="Fechar">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-          <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 1 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4Z"/>
+          <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 1 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 0-1.4Z"/>
         </svg>
       </a>` : '';
 
