@@ -23,7 +23,7 @@
         </svg>
       </div>
       <div>
-        <h1 class="brand-title">Presell Studio <span class="badge-v2">v2.3</span></h1>
+        <h1 class="brand-title">Presell Studio <span class="badge-v2">v3.0 Multi-Template</span></h1>
         <p class="brand-subtitle">Gerador de Presell Robusta para Google Ads & Meta Ads (Hostinger Ready)</p>
       </div>
     </div>
@@ -48,7 +48,7 @@
       <nav class="tabs-header" role="tablist">
         <button class="tab-btn active" data-tab="tab-platform" role="tab">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          Plataforma
+          Modelo & Link
         </button>
         <button class="tab-btn" data-tab="tab-design" role="tab">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
@@ -75,8 +75,41 @@
           ✓ Presell atualizada e salva automaticamente!
         </div>
 
-        <!-- Tab 1: Plataforma & Link -->
+        <!-- Tab 1: Modelo, Plataforma & Link -->
         <section id="tab-platform" class="tab-content active">
+          
+          <div class="form-group">
+            <label>Tipo de Template de Presell</label>
+            <div class="template-selector-grid">
+              <label class="template-card active" data-template="cookie">
+                <input type="radio" name="input-template" value="cookie" checked />
+                <div class="card-icon">🍪</div>
+                <div class="card-info">
+                  <strong>Cookie Consent Bridge</strong>
+                  <span>Modal de cookies com fundo desfocado. Ideal para Google Ads Search.</span>
+                </div>
+              </label>
+
+              <label class="template-card" data-template="quiz">
+                <input type="radio" name="input-template" value="quiz" />
+                <div class="card-icon">❓</div>
+                <div class="card-info">
+                  <strong>Quiz Interativo</strong>
+                  <span>3 perguntas com barra de análise. Ideal para Meta Ads & TikTok Ads.</span>
+                </div>
+              </label>
+
+              <label class="template-card" data-template="advertorial">
+                <input type="radio" name="input-template" value="advertorial" />
+                <div class="card-icon">📰</div>
+                <div class="card-info">
+                  <strong>Advertorial / Artigo Review</strong>
+                  <span>Portal de notícias com análise do produto. Ideal para Taboola & Google.</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="input-platform">Plataforma do Produto</label>
             <select id="input-platform" class="form-control">
@@ -87,20 +120,19 @@
               <option value="perfectpay">PerfectPay (gclid + src)</option>
               <option value="custom">Outra / Universal (Preserva todos parâmetros)</option>
             </select>
-            <span class="form-hint">Define as regras de propagação de parâmetros de rastreamento no link de saída.</span>
           </div>
 
           <div class="form-group">
             <label for="input-afflink">Link de Afiliado (HopLink / Checkout)</label>
             <input type="url" id="input-afflink" class="form-control highlight-input" value="https://62379g035eoa2xdeo7nx0qlsf9.hop.clickbank.net" placeholder="https://seuapelido.vendor.hop.clickbank.net" />
-            <span class="form-hint">O link para onde o lead será direcionado ao clicar nos botões ou fechar o modal.</span>
+            <span class="form-hint">O link para onde o lead será direcionado ao clicar nos botões ou responder o quiz.</span>
           </div>
 
-          <div class="form-group">
+          <div class="form-group" id="group-auto-screenshot">
             <button id="btn-auto-screenshot" class="btn btn-primary btn-block">
               📸 Capturar Print da VSL Automático
             </button>
-            <span class="form-hint text-center">Gera o fundo desfocado automaticamente extraindo o print da página do produtor.</span>
+            <span class="form-hint text-center">Extrai o print da página do produtor para o fundo desfocado.</span>
           </div>
 
           <div class="form-group">
@@ -139,33 +171,70 @@
           </div>
         </section>
 
-        <!-- Tab 3: Copy do Modal -->
+        <!-- Tab 3: Copy do Modal / Quiz / Advertorial -->
         <section id="tab-copy" class="tab-content">
-          <div class="form-group">
-            <label for="input-modal-title">Título do Modal</label>
-            <input type="text" id="input-modal-title" class="form-control" value="Configurações de cookies" />
-          </div>
-
-          <div class="form-group">
-            <label for="input-modal-text">Texto de Consentimento / Política</label>
-            <textarea id="input-modal-text" class="form-control" rows="4">Usamos cookies e tecnologias semelhantes para ajudar a personalizar o conteúdo, adaptar e medir anúncios e fornecer uma melhor experiência de navegação. Ao clicar em aceitar, você concorda com este uso, conforme descrito em nossa Política de Privacidade.</textarea>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group col">
-              <label for="input-btn-accept">Texto Botão Aceitar</label>
-              <input type="text" id="input-btn-accept" class="form-control" value="Sim, eu aceito" />
+          
+          <!-- Copy Options for Cookie Template -->
+          <div id="copy-fields-cookie">
+            <div class="form-group">
+              <label for="input-modal-title">Título do Modal</label>
+              <input type="text" id="input-modal-title" class="form-control" value="Configurações de cookies" />
             </div>
-            <div class="form-group col">
-              <label for="input-btn-decline">Texto Botão Recusar</label>
-              <input type="text" id="input-btn-decline" class="form-control" value="Eu não aceito" />
+
+            <div class="form-group">
+              <label for="input-modal-text">Texto de Consentimento / Política</label>
+              <textarea id="input-modal-text" class="form-control" rows="4">Usamos cookies e tecnologias semelhantes para ajudar a personalizar o conteúdo, adaptar e medir anúncios e fornecer uma melhor experiência de navegação. Ao clicar em aceitar, você concorda com este uso, conforme descrito em nossa Política de Privacidade.</textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col">
+                <label for="input-btn-accept">Texto Botão Aceitar</label>
+                <input type="text" id="input-btn-accept" class="form-control" value="Sim, eu aceito" />
+              </div>
+              <div class="form-group col">
+                <label for="input-btn-decline">Texto Botão Recusar</label>
+                <input type="text" id="input-btn-decline" class="form-control" value="Eu não aceito" />
+              </div>
+            </div>
+
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="input-show-close" checked />
+              <label for="input-show-close">Exibir botão "X" de fechar no canto superior</label>
             </div>
           </div>
 
-          <div class="form-group checkbox-group">
-            <input type="checkbox" id="input-show-close" checked />
-            <label for="input-show-close">Exibir botão "X" de fechar no canto superior</label>
+          <!-- Copy Options for Quiz Template -->
+          <div id="copy-fields-quiz" class="hidden">
+            <div class="form-group">
+              <label for="input-quiz-q1">Pergunta 1 do Quiz</label>
+              <input type="text" id="input-quiz-q1" class="form-control" value="Qual é o seu objetivo principal de saúde ou bem-estar hoje?" />
+            </div>
+            <div class="form-group">
+              <label for="input-quiz-q2">Pergunta 2 do Quiz</label>
+              <input type="text" id="input-quiz-q2" class="form-control" value="Com que frequência você busca soluções ou métodos naturais?" />
+            </div>
+            <div class="form-group">
+              <label for="input-quiz-q3">Pergunta 3 do Quiz</label>
+              <input type="text" id="input-quiz-q3" class="form-control" value="Você tem mais de 25 anos de idade?" />
+            </div>
           </div>
+
+          <!-- Copy Options for Advertorial Template -->
+          <div id="copy-fields-advertorial" class="hidden">
+            <div class="form-group">
+              <label for="input-adv-headline">Manchete Noticiosa (Headline)</label>
+              <input type="text" id="input-adv-headline" class="form-control" value="Descubra o Novo Método Natural que Está Impressionando Especialistas" />
+            </div>
+            <div class="form-group">
+              <label for="input-adv-subheadline">Subtítulo / Chamada da Notícia</label>
+              <textarea id="input-adv-subheadline" class="form-control" rows="3">Saiba como milhares de pessoas estão alcançando resultados extraordinários utilizando uma fórmula natural comprovada.</textarea>
+            </div>
+            <div class="form-group">
+              <label for="input-adv-button">Texto do Botão Principal CTA</label>
+              <input type="text" id="input-adv-button" class="form-control" value="Assistir à Apresentação Oficial Agora »" />
+            </div>
+          </div>
+
         </section>
 
         <!-- Tab 4: Pixels & Rastreamento -->

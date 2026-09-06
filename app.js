@@ -1,27 +1,43 @@
 /**
- * Presell Studio App (app.js v2.3)
- * Real-time code generation, interactive iframe preview, multi-platform parameter engine,
- * pixel injectors (GTM, GA4, GTag, Meta, TikTok), 1-click ZIP export, LocalStorage persistence,
- * local background image file upload, and Auto-Screenshot Extractor.
+ * Presell Studio App (app.js v3.0 Multi-Template Engine)
+ * Real-time code generation for 3 templates:
+ * 1) Cookie Consent Bridge
+ * 2) Interactive Quiz / Survey Presell
+ * 3) Advertorial / Article Review Presell
  */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const STORAGE_KEY = 'presell_studio_saved_state_v2';
+  const STORAGE_KEY = 'presell_studio_saved_state_v3';
 
-  // Default Initial State (Sample template)
+  // Default Initial State
   const defaultState = {
+    template: 'cookie',
     platform: 'clickbank',
     afflink: 'https://62379g035eoa2xdeo7nx0qlsf9.hop.clickbank.net',
     productName: 'Femicore Supplement',
     bgUrl: 'https://s3.eu-central-2.wasabisys.com/w.storage.screenshotapi.net/getfemicore_com_text_nhl2_php_hopid_1cb1f747_e730__4e1054324d85.webp',
     blur: 8,
     overlayOpacity: 45,
+    
+    // Cookie Template Copy
     modalTitle: 'Configurações de cookies',
     modalText: 'Usamos cookies e tecnologias semelhantes para ajudar a personalizar o conteúdo, adaptar e medir anúncios e fornecer uma melhor experiência de navegação. Ao clicar em aceitar, você concorda com este uso, conforme descrito em nossa Política de Privacidade.',
     btnAccept: 'Sim, eu aceito',
     btnDecline: 'Eu não aceito',
     showClose: true,
+
+    // Quiz Template Copy
+    quizQ1: 'Qual é o seu objetivo principal de saúde ou bem-estar hoje?',
+    quizQ2: 'Com que frequência você busca soluções ou métodos naturais?',
+    quizQ3: 'Você tem mais de 25 anos de idade?',
+
+    // Advertorial Template Copy
+    advHeadline: 'Descubra o Novo Método Natural que Está Impressionando Especialistas',
+    advSubheadline: 'Saiba como milhares de pessoas estão alcançando resultados extraordinários utilizando uma fórmula natural comprovada.',
+    advButton: 'Assistir à Apresentação Oficial Agora »',
+
+    // Pixels
     pixelGtag: '',
     pixelGtagLabel: '',
     pixelGtm: '',
@@ -34,19 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
     testQueryString: ''
   };
 
-  // Clean Empty State for New Presell
   const emptyState = {
-    platform: 'clickbank',
+    ...defaultState,
     afflink: '',
     productName: '',
     bgUrl: '',
-    blur: 8,
-    overlayOpacity: 45,
-    modalTitle: 'Configurações de cookies',
-    modalText: 'Usamos cookies e tecnologias semelhantes para ajudar a personalizar o conteúdo, adaptar e medir anúncios e fornecer uma melhor experiência de navegação. Ao clicar em aceitar, você concorda com este uso, conforme descrito em nossa Política de Privacidade.',
-    btnAccept: 'Sim, eu aceito',
-    btnDecline: 'Eu não aceito',
-    showClose: true,
     pixelGtag: '',
     pixelGtagLabel: '',
     pixelGtm: '',
@@ -54,9 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     pixelFb: '',
     pixelTiktok: '',
     customHead: '',
-    customBody: '',
-    activeCodeTab: 'code-html',
-    testQueryString: ''
+    customBody: ''
   };
 
   let state = { ...defaultState };
@@ -72,11 +78,31 @@ document.addEventListener('DOMContentLoaded', () => {
     valBlur: document.getElementById('val-blur'),
     overlayOpacity: document.getElementById('input-overlay-opacity'),
     valOverlay: document.getElementById('val-overlay'),
+    
+    // Cookie Copy Inputs
     modalTitle: document.getElementById('input-modal-title'),
     modalText: document.getElementById('input-modal-text'),
     btnAccept: document.getElementById('input-btn-accept'),
     btnDecline: document.getElementById('input-btn-decline'),
     showClose: document.getElementById('input-show-close'),
+
+    // Quiz Copy Inputs
+    quizQ1: document.getElementById('input-quiz-q1'),
+    quizQ2: document.getElementById('input-quiz-q2'),
+    quizQ3: document.getElementById('input-quiz-q3'),
+
+    // Advertorial Copy Inputs
+    advHeadline: document.getElementById('input-adv-headline'),
+    advSubheadline: document.getElementById('input-adv-subheadline'),
+    advButton: document.getElementById('input-adv-button'),
+
+    // Sections
+    copyCookie: document.getElementById('copy-fields-cookie'),
+    copyQuiz: document.getElementById('copy-fields-quiz'),
+    copyAdvertorial: document.getElementById('copy-fields-advertorial'),
+    groupAutoScreenshot: document.getElementById('group-auto-screenshot'),
+
+    // Pixels
     pixelGtag: document.getElementById('input-pixel-gtag'),
     pixelGtagLabel: document.getElementById('input-pixel-gtag-label'),
     pixelGtm: document.getElementById('input-pixel-gtm'),
@@ -85,6 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
     pixelTiktok: document.getElementById('input-pixel-tiktok'),
     customHead: document.getElementById('input-custom-head'),
     customBody: document.getElementById('input-custom-body'),
+    
+    // UI Preview & Controls
     previewIframe: document.getElementById('preview-iframe'),
     codeDisplay: document.getElementById('code-display'),
     btnCopyCode: document.getElementById('btn-copy-code'),
@@ -116,14 +144,27 @@ document.addEventListener('DOMContentLoaded', () => {
       if (saved) {
         const parsed = JSON.parse(saved);
         state = { ...defaultState, ...parsed };
-        syncStateToInputs();
       }
     } catch (e) {
       console.warn('LocalStorage load failed:', e);
     }
+    syncStateToInputs();
   }
 
   function syncStateToInputs() {
+    // Template Selector Cards
+    document.querySelectorAll('.template-card').forEach(card => {
+      if (card.dataset.template === state.template) {
+        card.classList.add('active');
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+      } else {
+        card.classList.remove('active');
+      }
+    });
+
+    updateCopyTabVisibility();
+
     if (elements.platform) elements.platform.value = state.platform || 'clickbank';
     if (elements.afflink) elements.afflink.value = state.afflink || '';
     if (elements.productName) elements.productName.value = state.productName || '';
@@ -137,11 +178,25 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.overlayOpacity.value = state.overlayOpacity || 45;
       elements.valOverlay.textContent = `${state.overlayOpacity || 45}%`;
     }
+
+    // Cookie Copy
     if (elements.modalTitle) elements.modalTitle.value = state.modalTitle || '';
     if (elements.modalText) elements.modalText.value = state.modalText || '';
     if (elements.btnAccept) elements.btnAccept.value = state.btnAccept || '';
     if (elements.btnDecline) elements.btnDecline.value = state.btnDecline || '';
     if (elements.showClose) elements.showClose.checked = state.showClose !== false;
+
+    // Quiz Copy
+    if (elements.quizQ1) elements.quizQ1.value = state.quizQ1 || '';
+    if (elements.quizQ2) elements.quizQ2.value = state.quizQ2 || '';
+    if (elements.quizQ3) elements.quizQ3.value = state.quizQ3 || '';
+
+    // Advertorial Copy
+    if (elements.advHeadline) elements.advHeadline.value = state.advHeadline || '';
+    if (elements.advSubheadline) elements.advSubheadline.value = state.advSubheadline || '';
+    if (elements.advButton) elements.advButton.value = state.advButton || '';
+
+    // Pixels
     if (elements.pixelGtag) elements.pixelGtag.value = state.pixelGtag || '';
     if (elements.pixelGtagLabel) elements.pixelGtagLabel.value = state.pixelGtagLabel || '';
     if (elements.pixelGtm) elements.pixelGtm.value = state.pixelGtm || '';
@@ -150,6 +205,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.pixelTiktok) elements.pixelTiktok.value = state.pixelTiktok || '';
     if (elements.customHead) elements.customHead.value = state.customHead || '';
     if (elements.customBody) elements.customBody.value = state.customBody || '';
+  }
+
+  function updateCopyTabVisibility() {
+    if (elements.copyCookie) elements.copyCookie.classList.add('hidden');
+    if (elements.copyQuiz) elements.copyQuiz.classList.add('hidden');
+    if (elements.copyAdvertorial) elements.copyAdvertorial.classList.add('hidden');
+
+    if (state.template === 'cookie' && elements.copyCookie) {
+      elements.copyCookie.classList.remove('hidden');
+    } else if (state.template === 'quiz' && elements.copyQuiz) {
+      elements.copyQuiz.classList.remove('hidden');
+    } else if (state.template === 'advertorial' && elements.copyAdvertorial) {
+      elements.copyAdvertorial.classList.remove('hidden');
+    }
   }
 
   function showToast(msg) {
@@ -170,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const targetUrl = state.afflink;
-    // Auto-generate high resolution screenshot background
     const screenshotUrl = `https://image.thum.io/get/width/1200/crop/800/${targetUrl}`;
 
     state.bgUrl = screenshotUrl;
@@ -179,12 +247,24 @@ document.addEventListener('DOMContentLoaded', () => {
     onStateChanged('📸 Print da página do produtor capturado automaticamente!');
   }
 
-  // Bind Form Event Listeners to Update State
+  // Event Listeners
   function bindInputEvents() {
+
+    // Template Radio Cards Switcher
+    document.querySelectorAll('.template-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        state.template = card.dataset.template;
+        updateCopyTabVisibility();
+        onStateChanged(`Template alterado para: ${state.template.toUpperCase()}`);
+      });
+    });
+
     elements.platform.addEventListener('change', (e) => { state.platform = e.target.value; onStateChanged('Plataforma atualizada!'); });
     elements.afflink.addEventListener('input', (e) => { 
       state.afflink = e.target.value.trim(); 
-      onStateChanged('Link de Afiliado atualizado e salvo!'); 
+      onStateChanged('Link de Afiliado atualizado!'); 
     });
 
     if (elements.btnAutoScreenshot) {
@@ -222,12 +302,24 @@ document.addEventListener('DOMContentLoaded', () => {
       onStateChanged();
     });
 
+    // Cookie copy
     elements.modalTitle.addEventListener('input', (e) => { state.modalTitle = e.target.value; onStateChanged(); });
     elements.modalText.addEventListener('input', (e) => { state.modalText = e.target.value; onStateChanged(); });
     elements.btnAccept.addEventListener('input', (e) => { state.btnAccept = e.target.value; onStateChanged(); });
     elements.btnDecline.addEventListener('input', (e) => { state.btnDecline = e.target.value; onStateChanged(); });
     elements.showClose.addEventListener('change', (e) => { state.showClose = e.target.checked; onStateChanged(); });
 
+    // Quiz copy
+    elements.quizQ1.addEventListener('input', (e) => { state.quizQ1 = e.target.value; onStateChanged(); });
+    elements.quizQ2.addEventListener('input', (e) => { state.quizQ2 = e.target.value; onStateChanged(); });
+    elements.quizQ3.addEventListener('input', (e) => { state.quizQ3 = e.target.value; onStateChanged(); });
+
+    // Advertorial copy
+    elements.advHeadline.addEventListener('input', (e) => { state.advHeadline = e.target.value; onStateChanged(); });
+    elements.advSubheadline.addEventListener('input', (e) => { state.advSubheadline = e.target.value; onStateChanged(); });
+    elements.advButton.addEventListener('input', (e) => { state.advButton = e.target.value; onStateChanged(); });
+
+    // Pixels
     elements.pixelGtag.addEventListener('input', (e) => { state.pixelGtag = e.target.value.trim(); onStateChanged(); });
     elements.pixelGtagLabel.addEventListener('input', (e) => { state.pixelGtagLabel = e.target.value.trim(); onStateChanged(); });
     elements.pixelGtm.addEventListener('input', (e) => { state.pixelGtm = e.target.value.trim(); onStateChanged(); });
@@ -237,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.customHead.addEventListener('input', (e) => { state.customHead = e.target.value; onStateChanged(); });
     elements.customBody.addEventListener('input', (e) => { state.customBody = e.target.value; onStateChanged(); });
 
-    // Reset / New Project Button (Clears to clean empty fields)
+    // Reset Button
     if (elements.btnResetState) {
       elements.btnResetState.addEventListener('click', () => {
         localStorage.removeItem(STORAGE_KEY);
@@ -249,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // UI Tab Navigation
+    // Navigation Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         switchTab(btn.dataset.tab, btn);
@@ -323,16 +415,56 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCodeView();
   }
 
-  // Code Generator Functions
+  // --- Code Generation for All 3 Templates ---
+
   function generateCss() {
-    return `/* Presell Studio Generated Styles */
+    if (state.template === 'quiz') {
+      return `/* Presell Studio Generated Styles - Quiz Template */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; font-family: system-ui, -apple-system, sans-serif; color: #0f172a; background-color: #0b0f19; overflow-x: hidden; }
+.backdrop-wrapper { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+.backdrop-image { position: absolute; inset: 0; width: 100%; height: 100%; background-size: cover; background-position: center top; background-repeat: no-repeat; background-image: url('${state.bgUrl || "assets/producer_preview.webp"}'); filter: blur(${state.blur}px) brightness(0.85); transform: scale(1.05); }
+.backdrop-overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, ${state.overlayOpacity / 100}); backdrop-filter: blur(2px); }
+.modal-container { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.25rem; }
+.quiz-card { position: relative; background: #ffffff; border-radius: 16px; padding: 2.5rem 2rem; width: 100%; max-width: 580px; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.3); text-align: center; }
+.quiz-progress-bar { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 1.5rem; }
+.quiz-progress-fill { height: 100%; width: 33%; background: #3b82f6; transition: width 0.3s ease; }
+.quiz-step { display: none; }
+.quiz-step.active { display: block; animation: fadeIn 0.3s ease; }
+.quiz-step h2 { font-size: 1.35rem; color: #0f172a; margin-bottom: 1.5rem; }
+.quiz-options { display: flex; flex-direction: column; gap: 0.75rem; }
+.quiz-opt-btn { width: 100%; padding: 0.85rem 1rem; font-size: 0.95rem; font-weight: 600; color: #1e293b; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; }
+.quiz-opt-btn:hover { background: #3b82f6; color: #ffffff; border-color: #3b82f6; }
+.analyzing-box { text-align: center; padding: 2rem 0; }
+.spinner { width: 42px; height: 42px; border: 4px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 1.25rem auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }`;
+    } else if (state.template === 'advertorial') {
+      return `/* Presell Studio Generated Styles - Advertorial Template */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; min-height: 100%; font-family: system-ui, -apple-system, sans-serif; color: #1e293b; background-color: #f8fafc; line-height: 1.6; }
+header.adv-header { background: #0f172a; color: #ffffff; padding: 0.85rem 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center; }
+.adv-container { max-width: 780px; margin: 2rem auto; padding: 0 1.25rem; }
+.adv-badge { display: inline-block; background: #eff6ff; color: #2563eb; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; margin-bottom: 0.85rem; }
+h1.adv-headline { font-size: 1.85rem; font-weight: 800; color: #0f172a; line-height: 1.3; margin-bottom: 1rem; }
+.adv-subheadline { font-size: 1.05rem; color: #475569; margin-bottom: 1.5rem; border-left: 4px solid #3b82f6; padding-left: 1rem; }
+.adv-hero-img { width: 100%; max-height: 420px; object-fit: cover; border-radius: 12px; margin-bottom: 1.5rem; }
+.adv-content p { font-size: 1rem; margin-bottom: 1.25rem; color: #334155; }
+.adv-cta-box { background: #ffffff; border: 2px solid #3b82f6; border-radius: 14px; padding: 2rem; text-align: center; margin: 2.5rem 0; box-shadow: 0 10px 25px -5px rgba(59,130,246,0.15); }
+.btn-cta { display: inline-flex; align-items: center; justify-content: center; width: 100%; max-width: 420px; padding: 1rem 1.5rem; font-size: 1.1rem; font-weight: 700; color: #ffffff; background: #2563eb; border-radius: 10px; text-decoration: none; transition: background 0.2s ease; }
+.btn-cta:hover { background: #1d4ed8; }
+footer.adv-footer { text-align: center; font-size: 0.75rem; color: #94a3b8; border-top: 1px solid #e2e8f0; padding: 2rem 1.25rem; margin-top: 3rem; }`;
+    }
+
+    // Default Cookie Template CSS
+    return `/* Presell Studio Generated Styles - Cookie Template */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { width: 100%; height: 100%; font-family: system-ui, -apple-system, sans-serif; color: #0f172a; background-color: #0b0f19; overflow: hidden; }
 .backdrop-wrapper { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
 .backdrop-image { position: absolute; inset: 0; width: 100%; height: 100%; background-size: cover; background-position: center top; background-repeat: no-repeat; background-image: url('${state.bgUrl || "assets/producer_preview.webp"}'); filter: blur(${state.blur}px) brightness(0.85); transform: scale(1.05); }
 .backdrop-overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, ${state.overlayOpacity / 100}); backdrop-filter: blur(2px); }
 .modal-container { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.25rem; }
-.cookie-modal { position: relative; background: #ffffff; border-radius: 16px; padding: 2.5rem 2rem; width: 100%; max-width: 580px; box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1); text-align: center; }
+.cookie-modal { position: relative; background: #ffffff; border-radius: 16px; padding: 2.5rem 2rem; width: 100%; max-width: 580px; box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3); text-align: center; }
 .modal-close-btn { position: absolute; top: 1rem; right: 1rem; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; color: #64748b; text-decoration: none; transition: background-color 0.2s ease; }
 .modal-close-btn:hover { background-color: #f1f5f9; color: #0f172a; }
 .modal-header h1 { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 0.85rem; }
@@ -349,12 +481,12 @@ html, body { width: 100%; height: 100%; font-family: system-ui, -apple-system, s
   function generateJs() {
     return `/**
  * Multi-Platform Tracking & Parameter Propagator (tracking.js)
+ * Template: ${state.template.toUpperCase()}
  * Platform: ${state.platform.toUpperCase()}
  */
 (function() {
   'use strict';
 
-  // Platform Parameter Mappings
   const PLATFORM_PARAMS = {
     clickbank: ['gclid', 'tid', 'traffic_source', 'traffic_type', 'campaign', 'adgroup', 'keyword', 'utm_source', 'utm_medium', 'utm_campaign', 'aff_sub1', 'aff_sub2', 'aff_sub3', 'aff_sub4', 'aff_sub5'],
     buygoods: ['gclid', 'subid', 'subid2', 'subid3', 'subid4', 'subid5', 'utm_source', 'utm_medium', 'utm_campaign'],
@@ -378,7 +510,6 @@ html, body { width: 100%; height: 100%; font-family: system-ui, -apple-system, s
         }
       });
 
-      // Forward any extra custom params
       currentParams.forEach((val, key) => {
         if (!targetUrl.searchParams.has(key) && val) {
           targetUrl.searchParams.set(key, val);
@@ -392,29 +523,10 @@ html, body { width: 100%; height: 100%; font-family: system-ui, -apple-system, s
   }
 
   function triggerPixelEvents() {
-    // Google Ads GTag Click Conversion
-    ${state.pixelGtagLabel ? `
-    if (typeof gtag === 'function') {
-      gtag('event', 'conversion', { 'send_to': '${state.pixelGtagLabel}' });
-    }` : ''}
-
-    // Google Analytics 4 Click Event
-    ${state.pixelGa4 ? `
-    if (typeof gtag === 'function') {
-      gtag('event', 'click_presell', { 'event_category': 'Engagement', 'event_label': '${state.productName}' });
-    }` : ''}
-
-    // Meta/Facebook Lead Event
-    ${state.pixelFb ? `
-    if (typeof fbq === 'function') {
-      fbq('track', 'Lead', { content_name: '${state.productName}' });
-    }` : ''}
-
-    // TikTok Click Event
-    ${state.pixelTiktok ? `
-    if (typeof ttq === 'object' && typeof ttq.track === 'function') {
-      ttq.track('ClickButton');
-    }` : ''}
+    ${state.pixelGtagLabel ? `if (typeof gtag === 'function') { gtag('event', 'conversion', { 'send_to': '${state.pixelGtagLabel}' }); }` : ''}
+    ${state.pixelGa4 ? `if (typeof gtag === 'function') { gtag('event', 'click_presell', { 'event_category': 'Engagement', 'event_label': '${state.productName}' }); }` : ''}
+    ${state.pixelFb ? `if (typeof fbq === 'function') { fbq('track', 'Lead', { content_name: '${state.productName}' }); }` : ''}
+    ${state.pixelTiktok ? `if (typeof ttq === 'object' && typeof ttq.track === 'function') { ttq.track('ClickButton'); }` : ''}
   }
 
   function initTracking() {
@@ -463,7 +575,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->`);
     }
 
-    // Google GTag (Google Ads or GA4)
+    // Google GTag
     if (state.pixelGtag || state.pixelGa4) {
       const mainTagId = state.pixelGtag || state.pixelGa4;
       headScripts.push(`<!-- Google tag (gtag.js) -->
@@ -477,7 +589,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </script>`);
     }
 
-    // Facebook / Meta Pixel
+    // Meta Pixel
     if (state.pixelFb) {
       headScripts.push(`<!-- Meta Pixel Code -->
 <script>
@@ -491,11 +603,7 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '${state.pixelFb}');
 fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
-/></noscript>
-<!-- End Meta Pixel Code -->`);
+</script>`);
     }
 
     // TikTok Pixel
@@ -513,26 +621,121 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
     if (state.customHead) headScripts.push(state.customHead);
     if (state.customBody) bodyScripts.push(state.customBody);
 
-    const closeBtnHtml = state.showClose ? `
+    // Render Body according to Selected Template
+    let bodyContent = '';
+
+    if (state.template === 'quiz') {
+      bodyContent = `
+  <div class="backdrop-wrapper" aria-hidden="true">
+    <div class="backdrop-image"></div>
+    <div class="backdrop-overlay"></div>
+  </div>
+
+  <main class="modal-container">
+    <div class="quiz-card">
+      <div class="quiz-progress-bar">
+        <div id="quiz-progress" class="quiz-progress-fill"></div>
+      </div>
+
+      <!-- Step 1 -->
+      <div id="step-1" class="quiz-step active">
+        <h2>${escapeHtml(state.quizQ1)}</h2>
+        <div class="quiz-options">
+          <button class="quiz-opt-btn" onclick="nextStep(2)">Sim, com certeza</button>
+          <button class="quiz-opt-btn" onclick="nextStep(2)">Busco uma solução rápida</button>
+          <button class="quiz-opt-btn" onclick="nextStep(2)">Quero conhecer mais</button>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div id="step-2" class="quiz-step">
+        <h2>${escapeHtml(state.quizQ2)}</h2>
+        <div class="quiz-options">
+          <button class="quiz-opt-btn" onclick="nextStep(3)">Sempre prefiro métodos naturais</button>
+          <button class="quiz-opt-btn" onclick="nextStep(3)">Às vezes experimentando novos produtos</button>
+          <button class="quiz-opt-btn" onclick="nextStep(3)">Esta é minha primeira vez</button>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div id="step-3" class="quiz-step">
+        <h2>${escapeHtml(state.quizQ3)}</h2>
+        <div class="quiz-options">
+          <button class="quiz-opt-btn" onclick="finishQuiz()">Sim</button>
+          <button class="quiz-opt-btn" onclick="finishQuiz()">Não</button>
+        </div>
+      </div>
+
+      <!-- Analyzing Final Screen -->
+      <div id="step-analyzing" class="quiz-step">
+        <div class="analyzing-box">
+          <div class="spinner"></div>
+          <h2>Analisando suas respostas...</h2>
+          <p>Gerando recomendação personalizada para você...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function nextStep(stepNum) {
+      document.querySelectorAll('.quiz-step').forEach(s => s.classList.remove('active'));
+      document.getElementById('step-' + stepNum).classList.add('active');
+      document.getElementById('quiz-progress').style.width = (stepNum * 33) + '%';
+    }
+
+    function finishQuiz() {
+      document.querySelectorAll('.quiz-step').forEach(s => s.classList.remove('active'));
+      document.getElementById('step-analyzing').classList.add('active');
+      document.getElementById('quiz-progress').style.width = '100%';
+      setTimeout(function() {
+        var targetLink = '${state.afflink || "#"}';
+        if (typeof buildUrlWithParams === 'function') {
+          targetLink = buildUrlWithParams(targetLink);
+        }
+        window.location.href = targetLink;
+      }, 1500);
+    }
+  </script>`;
+    } else if (state.template === 'advertorial') {
+      bodyContent = `
+  <header class="adv-header">
+    <div>Portal Notícias & Saúde</div>
+    <div>Relatório Especial</div>
+  </header>
+
+  <div class="adv-container">
+    <span class="adv-badge">Artigo de Análise & Investigação</span>
+    <h1 class="adv-headline">${escapeHtml(state.advHeadline)}</h1>
+    <div class="adv-subheadline">${escapeHtml(state.advSubheadline)}</div>
+
+    <img src="${state.bgUrl || "assets/producer_preview.webp"}" alt="Review Produto" class="adv-hero-img" />
+
+    <div class="adv-content">
+      <p>Especialistas em saúde e bem-estar têm chamado a atenção para uma nova abordagem natural que vem revolucionando os resultados observados em milhares de pessoas este ano.</p>
+      <p>Estudos recentes apontam que a combinação de ingredientes certos pode otimizar a experiência sem necessitar de rotinas exaustivas ou métodos mirabolantes.</p>
+    </div>
+
+    <div class="adv-cta-box">
+      <h2>Deseja Conhecer a Apresentação Completa?</h2>
+      <p style="margin-bottom: 1.25rem;">Clique no botão abaixo para assistir ao vídeo oficial de apresentação da fórmula original.</p>
+      <a href="${state.afflink || '#'}" class="btn-cta cb-hoplink">${escapeHtml(state.advButton)}</a>
+    </div>
+  </div>
+
+  <footer class="adv-footer">
+    <p>Aviso Legal: Esta é uma página de verificação e avaliação patrocinada. Os resultados podem variar de pessoa para pessoa.</p>
+  </footer>`;
+    } else {
+      // Cookie Template Default
+      const closeBtnHtml = state.showClose ? `
       <a href="${state.afflink || '#'}" class="modal-close-btn cb-hoplink" aria-label="Fechar">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-          <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 1 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 0-1.4Z"/>
+          <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 1 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4Z"/>
         </svg>
       </a>` : '';
 
-    return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${escapeHtml(state.productName || 'Verificação')}</title>
-  <link rel="stylesheet" href="styles.css" />
-  ${headScripts.join('\n  ')}
-  <script src="tracking.js" defer></script>
-</head>
-<body>
-  ${bodyScripts.join('\n  ')}
-
+      bodyContent = `
   <div class="backdrop-wrapper" aria-hidden="true">
     <div class="backdrop-image"></div>
     <div class="backdrop-overlay"></div>
@@ -552,7 +755,22 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
         <a href="${state.afflink || '#'}" class="btn btn-secondary cb-hoplink">${escapeHtml(state.btnDecline)}</a>
       </div>
     </div>
-  </main>
+  </main>`;
+    }
+
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(state.productName || 'Verificação')}</title>
+  <link rel="stylesheet" href="styles.css" />
+  ${headScripts.join('\n  ')}
+  <script src="tracking.js" defer></script>
+</head>
+<body>
+  ${bodyScripts.join('\n  ')}
+  ${bodyContent}
 </body>
 </html>`;
   }
@@ -577,7 +795,6 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
     const cssContent = generateCss();
     const jsContent = generateJs();
 
-    // Bundle inline for iframe sandbox preview
     const fullDoc = htmlContent
       .replace('<link rel="stylesheet" href="styles.css" />', `<style>${cssContent}</style>`)
       .replace('<script src="tracking.js" defer></script>', `<script>${jsContent}</script>`);
@@ -625,7 +842,7 @@ src="https://www.facebook.com/tr?id=${state.pixelFb}&ev=PageView&noscript=1"
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `presell_${state.platform}_${Date.now()}.zip`;
+      a.download = `presell_${state.template}_${state.platform}_${Date.now()}.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
